@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hall71</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>2025師大牧養表單</h1>
+
+  <!-- 日期选择 -->
+  <label for="date-range">選擇日期區間：</label>
+  <select id="date-range">
+    <option value="G">8/26 ~ 9/1</option>
+    <option value="H">9/2 ~ 9/8</option>
+    <option value="I">9/9 ~ 9/15</option>
+    <option value="J">9/16 ~ 9/22</option>
+    <option value="K">9/23 ~ 9/29</option>
+    <option value="L">9/30 ~ 10/6</option>
+    <option value="M">10/7 ~ 10/13</option>
+    <option value="N">10/14 ~ 10/20</option>
+    <option value="O">10/21 ~ 10/27</option>
+    <option value="P">10/28 ~ 11/3</option>
+    <option value="Q">11/4 ~ 11/10</option>
+    <option value="R">11/11 ~ 11/17</option>
+    <option value="S">11/18 ~ 11/24</option>
+    <option value="T">11/25 ~ 12/1</option>
+    <option value="U">12/2 ~ 12/8</option>
+    <option value="V">12/9 ~ 12/15</option>
+    <option value="W">12/16 ~ 12/22</option>
+    <option value="X">12/23 ~ 12/29</option>
+  </select>
+
+  <div id="checkbox-container"></div>
+
+  <script>
+    let formData = {};
+    let nameToRowIndexMap = {};
+
+    // 获取当前日期，并判断日期属于哪个区间
+    function getCurrentDateRange() {
+      const currentDate = new Date();
+      const month = currentDate.getMonth() + 1;  // 月份从0开始，所以需要加1
+      const day = currentDate.getDate();
+
+      const dateRanges = [
+        { start: [8, 26], end: [9, 1], value: 'G' },
+        { start: [9, 2], end: [9, 8], value: 'H' },
+        { start: [9, 9], end: [9, 15], value: 'I' },
+        { start: [9, 16], end: [9, 22], value: 'J' },
+        { start: [9, 23], end: [9, 29], value: 'K' },
+        { start: [9, 30], end: [10, 6], value: 'L' },
+        { start: [10, 7], end: [10, 13], value: 'M' },
+        { start: [10, 14], end: [10, 20], value: 'N' },
+        { start: [10, 21], end: [10, 27], value: 'O' },
+        { start: [10, 28], end: [11, 3], value: 'P' },
+        { start: [11, 4], end: [11, 10], value: 'Q' },
+        { start: [11, 11], end: [11, 17], value: 'R' },
+        { start: [11, 18], end: [11, 24], value: 'S' },
+        { start: [11, 25], end: [12, 1], value: 'T' },
+        { start: [12, 2], end: [12, 8], value: 'U' },
+        { start: [12, 9], end: [12, 15], value: 'V' },
+        { start: [12, 16], end: [12, 22], value: 'W' },
+        { start: [12, 23], end: [12, 29], value: 'X' },
+      ];
+
+      // 根据当前日期判断区间
+      for (const range of dateRanges) {
+        const [startMonth, startDay] = range.start;
+        const [endMonth, endDay] = range.end;
+
+        if (
+          (month === startMonth && day >= startDay) &&
+          (month === endMonth && day <= endDay) && 
+          (month > startMonth && month < endMonth)
+        ) {
+          return range.value;
+        }
+      }
+      return 'X';  // 默认返回X区间，如果无法匹配
+    }
+
+    // 获取当前页面的 hall 名称
+    function getHallFromTitle() {
+      const hallName = document.title.toLowerCase();  // 获取页面的标题，假设 title = "62會所"
+      return hallName;  // 转换为符合后端要求的名称（例如：hall62）
+    }
+
+    // 根据自动获取的日期区间来设置默认值
+    function setDefaultDateRange() {
+      const defaultDate = getCurrentDateRange();  // 获取自动选择的日期
+      document.getElementById('date-range').value = defaultDate;  // 设置下拉框的默认值
+      const hall = getHallFromTitle(); // 获取当前页面的 hall 名称
+      alert(hall);
+      fetchDataAndUpdateCheckboxes(defaultDate, hall);  // 通过自动获取的日期和 hall 获取数据
+    }
+
+    function fetchDataAndUpdateCheckboxes(selectedDate, hall) {
+      fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`)
+        .then(response => response.json())
+        .then(data => {
+          formData = data.groupedData;
+          nameToRowIndexMap = data.nameToRowIndexMap;
+          const checkboxContainer = document.querySelector('#checkbox-container');
+          checkboxContainer.innerHTML = ''; // 清空之前的数据
+
+          for (let caregiver in formData) {
+            const caregiverDiv = document.createElement('div');
+            caregiverDiv.classList.add('caregiver-group');
+            caregiverDiv.innerHTML = `<h3>${caregiver}：</h3>`;
+
+            const caregiverData = formData[caregiver];
+            caregiverData.forEach(person => {
+              const checkboxWrapper = document.createElement('div');
+              checkboxWrapper.innerHTML = `<h4>${person.name}：</h4>`;
+
+              const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
+              options.forEach(option => {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `${caregiver}-${person.name}-${option}`;
+                checkbox.name = `${caregiver}-${person.name}-${option}`;
+                checkbox.value = option;
+
+                checkbox.checked = person.attendance && person.attendance.includes(option);
+
+                const label = document.createElement('label');
+                label.setAttribute('for', checkbox.id);
+                label.textContent = option;
+
+                checkboxWrapper.appendChild(checkbox);
+                checkboxWrapper.appendChild(label);
+                checkboxWrapper.appendChild(document.createElement('br'));
+              });
+
+              caregiverDiv.appendChild(checkboxWrapper);
+            });
+
+            const submitButton = document.createElement('button');
+            submitButton.textContent = '提交修改';
+            submitButton.addEventListener('click', () => submitGroupChanges(caregiver));
+            caregiverDiv.appendChild(submitButton);
+
+            checkboxContainer.appendChild(caregiverDiv);
+          }
+        })
+        .catch(err => {
+          console.error('获取数据时出错:', err);
+          alert('获取数据时出错，请稍后再试。');
+        });
+    }
+
+    document.getElementById('date-range').addEventListener('change', function () {
+      const selectedDate = this.value;
+      const hall = getHallFromTitle();  // 获取当前页面的 hall 名称
+      fetchDataAndUpdateCheckboxes(selectedDate, hall);
+    });
+
+    // 初始化时设置默认日期
+    setDefaultDateRange();  // 调用时会根据页面动态获取 hall 名
+  </script>
+</body>
+</html>

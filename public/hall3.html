@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hall3</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/hall.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- 导航栏容器 -->
+  <div id="navbar-container"></div>
+
+  <!-- 页面内容 -->
+  <div class="container mt-5 pt-5">
+    <div id="checkbox-container"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/script.js"></script>
+
+  <script>
+    let formData = {};  // 用于存储从后端获取的照顾者数据
+    let nameToRowIndexMap = {};  // 用于存储照顾者的索引
+    const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
+
+    // 动态加载 navbar 并且绑定日期选择和搜索事件
+    function loadNavbar() {
+        fetch('navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+
+                // 绑定日期选择器的事件监听器
+                document.getElementById('date-range').addEventListener('change', function () {
+                    const selectedDate = this.value;
+                    const hall = getHallFromTitle();  // 获取当前页面的 hall 名称
+                    fetchDataAndUpdateCheckboxes(selectedDate, hall);
+                });
+
+                // 设置默认的日期区间
+                setDefaultDateRange();
+
+                // 绑定搜索框的输入事件
+                document.getElementById('search-input').addEventListener('input', function() {
+                    const searchTerm = this.value.trim().toLowerCase(); // 获取搜索框的内容
+                    filterCaregiverData(searchTerm); // 根据搜索内容过滤照顾者数据
+                });
+            })
+            .catch(error => console.error('Error loading navbar:', error));
+    }
+
+    // 初始化时加载 navbar
+    loadNavbar();
+
+    // 获取当前页面的 hall 名称
+    function getHallFromTitle() {
+        const hallName = document.title.toLowerCase(); // 获取页面标题，并将其转为小写
+        return hallName;
+    }
+
+    // 设置默认的日期区间
+    function setDefaultDateRange() {
+        const defaultDate = getCurrentDateRange();
+        const dateRangeSelect = document.getElementById('date-range');
+        if (dateRangeSelect) {
+            dateRangeSelect.value = defaultDate;
+        }
+        const hall = getHallFromTitle();
+        fetchDataAndUpdateCheckboxes(defaultDate, hall);
+    }
+
+    // 获取当前日期，并判断日期属于哪个区间
+    function getCurrentDateRange() {
+        const currentDate = new Date();
+        const month = currentDate.getMonth() + 1;  // 月份从0开始，所以需要加1
+        const day = currentDate.getDate();
+
+        const dateRanges = [
+            { start: [8, 26], end: [9, 1], value: 'G' },
+            { start: [9, 2], end: [9, 8], value: 'H' },
+            { start: [9, 9], end: [9, 15], value: 'I' },
+            // 其他日期范围...
+        ];
+
+        for (const range of dateRanges) {
+            const [startMonth, startDay] = range.start;
+            const [endMonth, endDay] = range.end;
+
+            if ((month === startMonth && day >= startDay) && (month === endMonth && day <= endDay)) {
+                return range.value;
+            }
+        }
+
+        return 'X'; // 默认返回 X 区间
+    }
+
+    // 根据日期区间和 hall 获取数据
+    function fetchDataAndUpdateCheckboxes(selectedDate, hall) {
+        fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`)
+            .then(response => response.json())
+            .then(data => {
+                formData = data.groupedData;
+                nameToRowIndexMap = data.nameToRowIndexMap;
+                const checkboxContainer = document.querySelector('#checkbox-container');
+                checkboxContainer.innerHTML = ''; // 清空之前的数据
+
+                // 渲染照顾者数据
+                renderCaregiverData(formData, options);
+            })
+            .catch(err => {
+                console.error('获取数据时出错:', err);
+                alert('获取数据时出错，请稍后再试。');
+            });
+    }
+
+    // 渲染照顾者数据
+    function renderCaregiverData(formData, options) {
+        const checkboxContainer = document.querySelector('#checkbox-container');
+        checkboxContainer.innerHTML = '';  // 清空之前的数据
+
+        // 渲染照顾者数据
+        for (let caregiver in formData) {
+            const caregiverDiv = document.createElement('div');
+            caregiverDiv.classList.add('caregiver-group');
+            caregiverDiv.innerHTML = `<h3>${caregiver}：</h3>`;
+
+            const caregiverData = formData[caregiver];
+            caregiverData.forEach(person => {
+                const checkboxWrapper = createCheckboxWrapper(caregiver, person, options);
+                caregiverDiv.appendChild(checkboxWrapper);
+            });
+
+            // 在最后添加提交按钮
+            const submitButton = document.createElement('button');
+            submitButton.textContent = '提交修改';
+            submitButton.addEventListener('click', submitFormChanges);  // 更新为提交所有数据
+            caregiverDiv.appendChild(submitButton);
+
+            checkboxContainer.appendChild(caregiverDiv);
+        }
+    }
+
+    // 创建复选框的 HTML 结构
+    function createCheckboxWrapper(caregiver, person, options) {
+        const checkboxWrapper = document.createElement('div');
+        checkboxWrapper.innerHTML = `<h4>${person.name}：</h4>`;
+
+        options.forEach(option => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `${caregiver}-${person.name}-${option}`;
+            checkbox.name = `${caregiver}-${person.name}-${option}`;
+            checkbox.value = option;
+            checkbox.checked = person.attendance && person.attendance.includes(option);
+
+            const label = document.createElement('label');
+            label.setAttribute('for', checkbox.id);
+            label.textContent = option;
+
+            checkboxWrapper.appendChild(checkbox);
+            checkboxWrapper.appendChild(label);
+            checkboxWrapper.appendChild(document.createElement('br'));
+        });
+
+        return checkboxWrapper;
+    }
+
+    // 提交表单数据
+    function submitFormChanges() {
+        const updatedData = collectFormData();  // 收集所有表单数据
+
+        // 获取当前选中的日期
+        const selectedDate = document.getElementById('date-range').value;
+
+        // 获取当前 hall 名称
+        const hall = getHallFromTitle();
+
+        // 发送更新的数据到后端
+        fetch('/updateData', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                updatedData: updatedData,
+                hall: hall,
+                selectedDate: selectedDate,
+                nameToRowIndexMap: nameToRowIndexMap  // 向后端发送照顾者的行索引信息
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('提交成功:', data.message);
+            alert('修改提交成功');
+        })
+        .catch(error => {
+            console.error('提交失败:', error);
+            alert('提交失败，请稍后再试');
+        });
+    }
+
+    // 收集所有表单数据并返回
+    function collectFormData() {
+        const updatedData = {};
+        const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
+
+        // 遍历所有照顾者
+        for (let caregiver in formData) {
+            const caregiverData = formData[caregiver];
+            updatedData[caregiver] = [];
+
+            // 遍历每个照顾者的数据
+            caregiverData.forEach(person => {
+                const selectedOptions = [];
+
+                options.forEach(option => {
+                    const checkbox = document.getElementById(`${caregiver}-${person.name}-${option}`);
+                    if (checkbox && checkbox.checked) {
+                        selectedOptions.push(option);
+                    }
+                });
+
+                // 存储每个人的选项
+                updatedData[caregiver].push({
+                    name: person.name,
+                    selectedOptions: selectedOptions
+                });
+            });
+        }
+
+        return updatedData;
+    }
+
+    // 搜索并过滤照顾者数据
+    function filterCaregiverData(searchTerm) {
+        const checkboxContainer = document.querySelector('#checkbox-container');
+        checkboxContainer.innerHTML = ''; // 清空当前显示的内容
+
+        // 过滤出匹配搜索条件的照顾者组
+        for (let caregiver in formData) {
+            if (caregiver.toLowerCase().includes(searchTerm)) { // 检查照顾者名字是否包含搜索内容
+                const caregiverDiv = document.createElement('div');
+                caregiverDiv.classList.add('caregiver-group');
+                caregiverDiv.innerHTML = `<h3>${caregiver}：</h3>`;
+
+                const caregiverData = formData[caregiver];
+                caregiverData.forEach(person => {
+                    const checkboxWrapper = createCheckboxWrapper(caregiver, person, options);
+                    caregiverDiv.appendChild(checkboxWrapper);
+                });
+
+                // 在最后添加提交按钮
+                const submitButton = document.createElement('button');
+                submitButton.textContent = '提交修改';
+                submitButton.addEventListener('click', submitFormChanges);  // 更新为提交所有数据
+                caregiverDiv.appendChild(submitButton);
+
+                checkboxContainer.appendChild(caregiverDiv);
+            }
+        }
+    }
+  </script>
+</body>
+</html>
