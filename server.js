@@ -3,15 +3,8 @@ const { google } = require('googleapis');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');  // 用于处理路径
-<<<<<<< HEAD
-const rateLimit = require('express-rate-limit'); // 用于请求频率限制
-
-// 配置
-const config = require('./config'); // 导入配置文件
-=======
 const config = require('./public/config'); // 导入配置文件
 const rateLimit = require('express-rate-limit'); // 用于请求频率限制
->>>>>>> 3e9a8a1 (Initial commit)
 const app = express();
 const port = 3000;
 

@@ -23,10 +23,7 @@
   <script>
     let formData = {};  // 用于存储从后端获取的照顾者数据
     let nameToRowIndexMap = {};  // 用于存储照顾者的索引
-<<<<<<< HEAD
     const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
-=======
->>>>>>> 3e9a8a1 (Initial commit)
 
     // 动态加载 navbar 并且绑定日期选择和搜索事件
     function loadNavbar() {
@@ -110,10 +107,6 @@
                 checkboxContainer.innerHTML = ''; // 清空之前的数据
 
                 // 渲染照顾者数据
-<<<<<<< HEAD
-=======
-                const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
->>>>>>> 3e9a8a1 (Initial commit)
                 renderCaregiverData(formData, options);
             })
             .catch(err => {
@@ -239,7 +232,6 @@
 
         return updatedData;
     }
-<<<<<<< HEAD
 
     // 搜索并过滤照顾者数据
     function filterCaregiverData(searchTerm) {
@@ -269,8 +261,6 @@
             }
         }
     }
-=======
->>>>>>> 3e9a8a1 (Initial commit)
   </script>
 </body>
 </html>
