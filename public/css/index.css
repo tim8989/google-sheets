@@ -1,0 +1,53 @@
+/* index.css */
+
+/* 页面的背景色 */
+body {
+  background-color: #f4faff;  /* 淡蓝色背景 */
+}
+
+/* 首页按钮的样式 */
+button {
+  background-color: #4a90e2;
+  color: white;
+  padding: 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #357ab7;
+}
+
+/* 首页标题样式 */
+h1 {
+  color: #4a90e2;
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+/* 响应式设计：小屏幕手机 */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 24px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 12px;
+  }
+}
+
+/* 响应式设计：更大的屏幕（例如，平板设备） */
+@media (min-width: 600px) and (max-width: 1024px) {
+  h1 {
+    font-size: 28px;
+  }
+
+  button {
+    font-size: 15px;
+    padding: 13px;
+  }
+}

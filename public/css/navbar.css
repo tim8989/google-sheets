@@ -1,0 +1,20 @@
+/* navbar.css: 导航栏样式 */
+
+/* 导航栏背景和文字颜色 */
+.navbar {
+    background-color: #4a90e2;
+  }
+  
+  .navbar a {
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+  }
+  
+  .navbar-toggler {
+    border-color: white;
+  }
+  
+  /* 导航栏链接的悬浮效果 */
+  .navbar-nav .nav-link:hover {
+    background-color: #357ab7;
+  }
