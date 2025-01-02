@@ -6,8 +6,7 @@ const path = require('path');  // 用于处理路径
 const config = require('./public/config'); // 导入配置文件
 const rateLimit = require('express-rate-limit'); // 用于请求频率限制
 const app = express();
-const port = 3000;
-
+const port = process.env.PORT || 3000; // 使用 Heroku 提供的端口
 // 提供 'public' 目录中的静态文件
 app.use(express.static(path.join(__dirname, 'public')));
 
